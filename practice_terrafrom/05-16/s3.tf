@@ -36,3 +36,21 @@ resource "aws_s3_bucket_public_access_block" "private" {
     ignore_public_acls      = true
     restrict_public_buckets = true
 }
+
+/*
+    パブリックバケット
+        外部に公開するバケット
+ */
+resource "aws_s3_bucket" "public" {
+    bucket = "public-dodonki-practice-terraform"
+    // アクセス権の設定です。デフォルトは「private」なので「public-read」を指定する
+    acl    = "public-read"
+
+    // CORS（Cross-Origin Resource Sharing）の設定
+    cors_rule {
+        allowed_origins = ["https://example.com"]
+        allowed_methods = ["GET"]
+        allowed_headers = ["*"]
+        max_age_seconds = 3000
+    }
+}
