@@ -54,3 +54,24 @@ resource "aws_s3_bucket" "public" {
         max_age_seconds = 3000
     }
 }
+
+/*
+    ログバケット
+        AWSの各種サービスがログを保存するためのログバケット
+ */
+resource "aws_s3_bucket" "alb_log" {
+    bucket = "alb-log-dodonki-practice-terraform"
+
+    /*
+        ライフサイクルルールを設定し180日経過したファイルを自動的に削除し、
+        ファイルが増えないようにする
+        Athenaで運用する時はどうするべきがよいのか……
+     */ 
+    lifecycle_rule {
+        enabled = true
+
+        expiration {
+            days = "180"
+        }
+    }
+}
