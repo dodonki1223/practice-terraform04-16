@@ -75,3 +75,42 @@ resource "aws_s3_bucket" "alb_log" {
         }
     }
 }
+
+/*
+    バケットポリシー
+        ALBのログを格納するバケットのバケットポリシーの設定
+ */
+resource "aws_s3_bucket_policy" "alb_log" {
+    bucket = aws_s3_bucket.alb_log.id
+    policy = data.aws_iam_policy_document.alb_log.json
+}
+
+data "aws_iam_policy_document" "alb_log" {
+    statement {
+        effect    = "Allow"
+        actions   = ["s3:PutObject"]
+        resources = ["arn:aws:s3:::${aws_s3_bucket.alb_log.id}/*"]
+
+        /*
+            identifiers に設定した id は Region x ELB ごとに割り振られているIDを指定する
+            詳しくは以下のURLを確認すること（今回はap-northeast-1のIDを設定）
+                https://docs.aws.amazon.com/ja_jp/elasticloadbalancing/latest/classic/enable-access-logs.html#attach-bucket-policy
+         */
+        principals {
+            type        = "AWS"
+            identifiers = ["582318560864"]
+        }
+    }
+}
+
+/*
+    S3バケットの削除
+        バケットの削除する場合はバケット内が空になっている必要がある
+        バケット内が空になっていなくても強制的に削除する場合は以下のように設定する
+        force_destroy = true を設定することで destroy コマンドでバケットを削除すること
+        ができるようになる
+        resource "aws_s3_bucket" "force_destroy" {
+            bucket        = "force-destroy-dodonki-practice-terraform"
+            force_destroy = true
+        }
+ */
