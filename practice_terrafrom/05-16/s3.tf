@@ -9,12 +9,6 @@
         バケットの強制削除
  */
 
-// 実行するアカウント情報
-provider "aws" {
-    region  = "ap-northeast-1"
-    profile = "terraform"
-}
-
 /*
     プライベートバケット
         外部に公開しないバケット
