@@ -20,7 +20,7 @@ resource "aws_vpc" "practice_terrafrom" {
     enable_dns_hostnames = true
 
     tags = {
-        Name = "practice_terrafrom"
+        Name = "practice_terrafrom_vpc"
     }
 }
 
@@ -40,5 +40,18 @@ resource "aws_subnet" "practice_terrafrom_public" {
 
     tags = {
         Name = "practice_terrafrom_public"
+    }
+}
+
+/*
+    インターネットゲートウェイ
+        VPCとインターネット間で通信ができるようにするため、インターネットゲートウェイを作成します
+        VPCは隔離されたネットワークなので単体ではインターネットと接続できません
+ */
+resource "aws_internet_gateway" "practice_terrafrom_gateway" {
+    vpc_id = aws_vpc.practice_terrafrom.id
+
+    tags = {
+        Name = "practice_terrafrom_igw"
     }
 }
