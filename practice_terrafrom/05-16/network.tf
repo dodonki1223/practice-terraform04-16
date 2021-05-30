@@ -23,3 +23,22 @@ resource "aws_vpc" "practice_terrafrom" {
         Name = "practice_terrafrom"
     }
 }
+
+/*
+    パブリックサブネット
+        VPCをさらに分割、インターネットからアクセス可能なパブリックサブネットを作成
+ */
+resource "aws_subnet" "practice_terrafrom_public" {
+    vpc_id                  = aws_vpc.practice_terrafrom.id
+    // 任意の単位で分割できる、こだわりがなければVPCで「/16」、サブネットでは「/24」にするとわかり良い
+    cidr_block              = "10.0.0.0/24"
+    // サブネットで起動したインスタンスにパブリックIPアドレスを自動的に割り当ててくれる
+    map_public_ip_on_launch = true
+    // アベイラビリティゾーンをまたがったサブネットは作成できません
+    // 複数のアベイラビリティゾーンで構成されたネットワークを「マルチAZ」と呼ぶ（可用性が向上する）
+    availability_zone       = "ap-northeast-1a"
+
+    tags = {
+        Name = "practice_terrafrom_public"
+    }
+}
