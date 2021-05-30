@@ -9,6 +9,16 @@ resource "aws_vpc" "practice_terrafrom_vpc" {
             後から変更できないため、最初にきちんと設計すること
             詳しくは以下のサイトを確認すること
                 https://docs.aws.amazon.com/ja_jp/vpc/latest/userguide/VPC_Subnets.html#vpc-resize
+            こちらのBlack Beltの資料はわかりやすい
+                https://d1.awsstatic.com/webinars/jp/pdf/services/20180418_AWS-BlackBelt_VPC.pdf
+            VPC CIDR とサブネット数
+                CIDRに「/16」を設定した場合のサブネット数とIPアドレス数
+                サブネットマスク：/18, サブネット数：    4, サブネットあたりのIPアドレス数：16379
+                サブネットマスク：/20, サブネット数：   16, サブネットあたりのIPアドレス数： 4091
+                サブネットマスク：/22, サブネット数：   64, サブネットあたりのIPアドレス数： 1019
+                サブネットマスク：/24, サブネット数：  256, サブネットあたりのIPアドレス数：  251
+                サブネットマスク：/26, サブネット数： 1024, サブネットあたりのIPアドレス数：   59
+                サブネットマスク：/28, サブネット数：16384, サブネットあたりのIPアドレス数：   11
      */
     cidr_block           = "10.0.0.0/16"
     /*
@@ -44,6 +54,22 @@ resource "aws_subnet" "practice_terrafrom_public_subnet" {
 }
 
 /*
+    プライベートサブネット
+        VPCをさらに分割、インターネットからアクセスできないプライベートサブネットを作成
+ */
+resource "aws_subnet" "practice_terrafrom_private_subnet" {
+    vpc_id                  = aws_vpc.practice_terrafrom_vpc.id
+    cidr_block              = "10.0.64.0/24"
+    availability_zone       = "ap-northeast-1a"
+    // パブリックIPアドレスは不要なのでfalseを設定
+    map_public_ip_on_launch = false
+
+    tags = {
+        Name = "practice_terrafrom_private_subnet"
+    }
+}
+
+/*
     インターネットゲートウェイ
         VPCとインターネット間で通信ができるようにするため、インターネットゲートウェイを作成します
         VPCは隔離されたネットワークなので単体ではインターネットと接続できません
@@ -72,6 +98,14 @@ resource "aws_route_table" "practice_terrafrom_public_rt" {
     }
 }
 
+resource "aws_route_table" "practice_terrafrom_private_rt" {
+    vpc_id = aws_vpc.practice_terrafrom_vpc.id
+
+    tags = {
+        Name = "practice_terrafrom_private_rt"
+    }
+}
+
 /*
     ルート
         ルートはルートテーブルの１レコードに該当する
@@ -91,4 +125,9 @@ resource "aws_route" "practice_terrafrom_public_r" {
 resource "aws_route_table_association" "practice_terrafrom_public_rta" {
     subnet_id      = aws_subnet.practice_terrafrom_public_subnet.id
     route_table_id = aws_route_table.practice_terrafrom_public_rt.id
+}
+
+resource "aws_route_table_association" "practice_terrafrom_private_rta" {
+    subnet_id      = aws_subnet.practice_terrafrom_private_subnet.id
+    route_table_id = aws_route_table.practice_terrafrom_private_rt.id
 }
