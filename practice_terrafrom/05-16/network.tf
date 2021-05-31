@@ -291,6 +291,8 @@ resource "aws_security_group_rule" "practice_terrafrom_sg_egress" {
     type              = "egress"
     from_port         = 0
     to_port           = 0
+    // –1 を指定するとすべてのタイプのトラフィックが許可される
+    // 詳しくは：https://docs.aws.amazon.com/ja_jp/AWSEC2/latest/UserGuide/security-group-rules-reference.html#sg-rules-other-instances
     protocol          = "-1"
     cidr_blocks       = ["0.0.0.0/0"]
     security_group_id = aws_security_group.practice_terrafrom_sg.id
