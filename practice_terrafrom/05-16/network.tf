@@ -117,6 +117,13 @@ resource "aws_route" "practice_terrafrom_public_r" {
     destination_cidr_block = "0.0.0.0/0"
 }
 
+resource "aws_route" "practice_terrafrom_private_r" {
+    route_table_id         = aws_route_table.practice_terrafrom_private_rt.id
+    nat_gateway_id         = aws_nat_gateway.practice_terrafrom_nat_gateway.id
+    // デフォルトルート（0.0.0.0/0）を設定し、NATゲートウェイにルーティングするよう設定する
+    destination_cidr_block = "0.0.0.0/0"
+}
+
 /*
     ルートテーブルの関連付け
         どのルートテーブルを使ってルーティングするかはサブネット単位で判断する
@@ -130,4 +137,36 @@ resource "aws_route_table_association" "practice_terrafrom_public_rta" {
 resource "aws_route_table_association" "practice_terrafrom_private_rta" {
     subnet_id      = aws_subnet.practice_terrafrom_private_subnet.id
     route_table_id = aws_route_table.practice_terrafrom_private_rt.id
+}
+
+/*
+    EIP（Elastic IP Address）
+        AWSではインスタンスを起動するたびに異なるIPアドレスが動的に割り当てられてしまうため、
+        パブリックIPアドレスを固定できます
+        今回はNATゲートウェイで使用するために作成しています
+ */
+resource "aws_eip" "practice_terrafrom_eip" {
+    vpc        = true
+    // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
+    // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
+    depends_on = [aws_internet_gateway.practice_terrafrom_igw]
+
+    tags = {
+        Name = "practice_terrafrom_eip"
+    }
+}
+
+/*
+    NATゲートウェイ
+        NAT（Network Address Translation）サーバーを導入すると、
+        プライベートネットワークからインターネットへアクセスできるようになります
+        EIP（Elastic IP Address）が必要です
+        設定先はプライベートサブネットではなくパブリックサブネットです
+ */
+resource "aws_nat_gateway" "practice_terrafrom_nat_gateway" {
+    allocation_id = aws_eip.practice_terrafrom_eip.id
+    subnet_id     = aws_subnet.practice_terrafrom_public_subnet.id
+    // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
+    // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
+    depends_on    = [aws_internet_gateway.practice_terrafrom_igw]
 }
