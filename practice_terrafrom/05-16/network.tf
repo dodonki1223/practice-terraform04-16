@@ -72,15 +72,27 @@ resource "aws_subnet" "practice_terrafrom_public_subnet_1c" {
     プライベートサブネット
         VPCをさらに分割、インターネットからアクセスできないプライベートサブネットを作成
  */
-resource "aws_subnet" "practice_terrafrom_private_subnet" {
+resource "aws_subnet" "practice_terrafrom_private_subnet_1a" {
     vpc_id                  = aws_vpc.practice_terrafrom_vpc.id
-    cidr_block              = "10.0.64.0/24"
+    cidr_block              = "10.0.65.0/24"
     availability_zone       = "ap-northeast-1a"
     // パブリックIPアドレスは不要なのでfalseを設定
     map_public_ip_on_launch = false
 
     tags = {
-        Name = "practice_terrafrom_private_subnet"
+        Name = "practice_terrafrom_private_subnet_1a"
+    }
+}
+
+resource "aws_subnet" "practice_terrafrom_private_subnet_1c" {
+    vpc_id                  = aws_vpc.practice_terrafrom_vpc.id
+    cidr_block              = "10.0.66.0/24"
+    availability_zone       = "ap-northeast-1c"
+    // パブリックIPアドレスは不要なのでfalseを設定
+    map_public_ip_on_launch = false
+
+    tags = {
+        Name = "practice_terrafrom_private_subnet_1c"
     }
 }
 
@@ -113,11 +125,19 @@ resource "aws_route_table" "practice_terrafrom_public_rt" {
     }
 }
 
-resource "aws_route_table" "practice_terrafrom_private_rt" {
+resource "aws_route_table" "practice_terrafrom_private_rt_1a" {
     vpc_id = aws_vpc.practice_terrafrom_vpc.id
 
     tags = {
-        Name = "practice_terrafrom_private_rt"
+        Name = "practice_terrafrom_private_rt_1a"
+    }
+}
+
+resource "aws_route_table" "practice_terrafrom_private_rt_1c" {
+    vpc_id = aws_vpc.practice_terrafrom_vpc.id
+
+    tags = {
+        Name = "practice_terrafrom_private_rt_1c"
     }
 }
 
@@ -132,9 +152,16 @@ resource "aws_route" "practice_terrafrom_public_r" {
     destination_cidr_block = "0.0.0.0/0"
 }
 
-resource "aws_route" "practice_terrafrom_private_r" {
-    route_table_id         = aws_route_table.practice_terrafrom_private_rt.id
+resource "aws_route" "practice_terrafrom_private_r_1a" {
+    route_table_id         = aws_route_table.practice_terrafrom_private_rt_1a.id
     nat_gateway_id         = aws_nat_gateway.practice_terrafrom_nat_gateway_1a.id
+    // デフォルトルート（0.0.0.0/0）を設定し、NATゲートウェイにルーティングするよう設定する
+    destination_cidr_block = "0.0.0.0/0"
+}
+
+resource "aws_route" "practice_terrafrom_private_r_1c" {
+    route_table_id         = aws_route_table.practice_terrafrom_private_rt_1c.id
+    nat_gateway_id         = aws_nat_gateway.practice_terrafrom_nat_gateway_1c.id
     // デフォルトルート（0.0.0.0/0）を設定し、NATゲートウェイにルーティングするよう設定する
     destination_cidr_block = "0.0.0.0/0"
 }
@@ -154,9 +181,14 @@ resource "aws_route_table_association" "practice_terrafrom_public_1c_rta" {
     route_table_id = aws_route_table.practice_terrafrom_public_rt.id
 }
 
-resource "aws_route_table_association" "practice_terrafrom_private_rta" {
-    subnet_id      = aws_subnet.practice_terrafrom_private_subnet.id
-    route_table_id = aws_route_table.practice_terrafrom_private_rt.id
+resource "aws_route_table_association" "practice_terrafrom_private_1a_rta" {
+    subnet_id      = aws_subnet.practice_terrafrom_private_subnet_1a.id
+    route_table_id = aws_route_table.practice_terrafrom_private_rt_1a.id
+}
+
+resource "aws_route_table_association" "practice_terrafrom_private_1c_rta" {
+    subnet_id      = aws_subnet.practice_terrafrom_private_subnet_1c.id
+    route_table_id = aws_route_table.practice_terrafrom_private_rt_1c.id
 }
 
 /*
@@ -165,14 +197,25 @@ resource "aws_route_table_association" "practice_terrafrom_private_rta" {
         パブリックIPアドレスを固定できます
         今回はNATゲートウェイで使用するために作成しています
  */
-resource "aws_eip" "practice_terrafrom_eip" {
+resource "aws_eip" "practice_terrafrom_eip_1a" {
     vpc        = true
     // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
     // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
     depends_on = [aws_internet_gateway.practice_terrafrom_igw]
 
     tags = {
-        Name = "practice_terrafrom_eip"
+        Name = "practice_terrafrom_eip_1a"
+    }
+}
+
+resource "aws_eip" "practice_terrafrom_eip_1c" {
+    vpc        = true
+    // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
+    // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
+    depends_on = [aws_internet_gateway.practice_terrafrom_igw]
+
+    tags = {
+        Name = "practice_terrafrom_eip_1c"
     }
 }
 
@@ -184,9 +227,25 @@ resource "aws_eip" "practice_terrafrom_eip" {
         設定先はプライベートサブネットではなくパブリックサブネットです
  */
 resource "aws_nat_gateway" "practice_terrafrom_nat_gateway_1a" {
-    allocation_id = aws_eip.practice_terrafrom_eip.id
+    allocation_id = aws_eip.practice_terrafrom_eip_1a.id
     subnet_id     = aws_subnet.practice_terrafrom_public_subnet_1a.id
     // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
     // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
     depends_on    = [aws_internet_gateway.practice_terrafrom_igw]
+
+    tags = {
+        Name = "practice_terrafrom_nat_gateway_1a"
+    }
+}
+
+resource "aws_nat_gateway" "practice_terrafrom_nat_gateway_1c" {
+    allocation_id = aws_eip.practice_terrafrom_eip_1c.id
+    subnet_id     = aws_subnet.practice_terrafrom_public_subnet_1c.id
+    // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
+    // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
+    depends_on    = [aws_internet_gateway.practice_terrafrom_igw]
+
+    tags = {
+        Name = "practice_terrafrom_nat_gateway_1c"
+    }
 }
