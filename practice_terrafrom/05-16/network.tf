@@ -249,3 +249,49 @@ resource "aws_nat_gateway" "practice_terrafrom_nat_gateway_1c" {
         Name = "practice_terrafrom_nat_gateway_1c"
     }
 }
+
+/*
+    セキュリティグループ
+        セキュリティグループはインスタンスレベルで動作する。サブネットレベルで動作するのは「ネットワークACL」
+        OSへ到達する前にネットワークレベルでパケットをフィルタリングできる
+ */
+resource "aws_security_group" "practice_terrafrom_sg" {
+    name   = "practice_terrafrom_sg"
+    vpc_id = aws_vpc.practice_terrafrom_vpc.id
+
+    tags = {
+        Name = "practice_terrafrom_sg"
+    }
+}
+
+/*
+    セキュリティグループルール（インバウンド）
+        デフォルトで許可されているのは同じセキュリティグループ内通信のみ（外からの通信は禁止）
+            ステートフル（往路のみに適用される、復路は動的に開放される） - ホワイトリスト型
+            ステートフルなので戻りのトラフィックを考慮しなくてよい
+            すべてのルールを適用
+ */
+resource "aws_security_group_rule" "practice_terrafrom_sg_ingress" {
+    // typeが「ingress」の場合はインバウンドルールになります
+    type              = "ingress"
+    // HTTP通信ができるよう80番ポートを許可する
+    from_port         = "80"
+    to_port           = "80"
+    protocol          = "tcp"
+    cidr_blocks       = ["0.0.0.0/0"]
+    security_group_id = aws_security_group.practice_terrafrom_sg.id
+}
+
+/*
+    セキュリティグループルール（アウトバウンド）
+        下記の設定ではすべての津神を許可する設定にしています
+ */
+resource "aws_security_group_rule" "practice_terrafrom_sg_egress" {
+    // typeが「egress」の場合はアウトバウンドルールになります
+    type              = "egress"
+    from_port         = 0
+    to_port           = 0
+    protocol          = "-1"
+    cidr_blocks       = ["0.0.0.0/0"]
+    security_group_id = aws_security_group.practice_terrafrom_sg.id
+}
