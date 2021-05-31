@@ -38,10 +38,10 @@ resource "aws_vpc" "practice_terrafrom_vpc" {
     パブリックサブネット
         VPCをさらに分割、インターネットからアクセス可能なパブリックサブネットを作成
  */
-resource "aws_subnet" "practice_terrafrom_public_subnet" {
+resource "aws_subnet" "practice_terrafrom_public_subnet_1a" {
     vpc_id                  = aws_vpc.practice_terrafrom_vpc.id
     // 任意の単位で分割できる、こだわりがなければVPCで「/16」、サブネットでは「/24」にするとわかり良い
-    cidr_block              = "10.0.0.0/24"
+    cidr_block              = "10.0.1.0/24"
     // サブネットで起動したインスタンスにパブリックIPアドレスを自動的に割り当ててくれる
     map_public_ip_on_launch = true
     // アベイラビリティゾーンをまたがったサブネットは作成できません
@@ -49,7 +49,22 @@ resource "aws_subnet" "practice_terrafrom_public_subnet" {
     availability_zone       = "ap-northeast-1a"
 
     tags = {
-        Name = "practice_terrafrom_public_subnet"
+        Name = "practice_terrafrom_public_subnet_1a"
+    }
+}
+
+resource "aws_subnet" "practice_terrafrom_public_subnet_1c" {
+    vpc_id                  = aws_vpc.practice_terrafrom_vpc.id
+    // 任意の単位で分割できる、こだわりがなければVPCで「/16」、サブネットでは「/24」にするとわかり良い
+    cidr_block              = "10.0.2.0/24"
+    // サブネットで起動したインスタンスにパブリックIPアドレスを自動的に割り当ててくれる
+    map_public_ip_on_launch = true
+    // アベイラビリティゾーンをまたがったサブネットは作成できません
+    // 複数のアベイラビリティゾーンで構成されたネットワークを「マルチAZ」と呼ぶ（可用性が向上する）
+    availability_zone       = "ap-northeast-1c"
+
+    tags = {
+        Name = "practice_terrafrom_public_subnet_1c"
     }
 }
 
@@ -119,7 +134,7 @@ resource "aws_route" "practice_terrafrom_public_r" {
 
 resource "aws_route" "practice_terrafrom_private_r" {
     route_table_id         = aws_route_table.practice_terrafrom_private_rt.id
-    nat_gateway_id         = aws_nat_gateway.practice_terrafrom_nat_gateway.id
+    nat_gateway_id         = aws_nat_gateway.practice_terrafrom_nat_gateway_1a.id
     // デフォルトルート（0.0.0.0/0）を設定し、NATゲートウェイにルーティングするよう設定する
     destination_cidr_block = "0.0.0.0/0"
 }
@@ -129,8 +144,13 @@ resource "aws_route" "practice_terrafrom_private_r" {
         どのルートテーブルを使ってルーティングするかはサブネット単位で判断する
         関連付けを忘れた場合はデフォルトルートテーブルが自動的に使われる（アンチパターンなので使用すべきではない）
  */
-resource "aws_route_table_association" "practice_terrafrom_public_rta" {
-    subnet_id      = aws_subnet.practice_terrafrom_public_subnet.id
+resource "aws_route_table_association" "practice_terrafrom_public_1a_rta" {
+    subnet_id      = aws_subnet.practice_terrafrom_public_subnet_1a.id
+    route_table_id = aws_route_table.practice_terrafrom_public_rt.id
+}
+
+resource "aws_route_table_association" "practice_terrafrom_public_1c_rta" {
+    subnet_id      = aws_subnet.practice_terrafrom_public_subnet_1c.id
     route_table_id = aws_route_table.practice_terrafrom_public_rt.id
 }
 
@@ -163,9 +183,9 @@ resource "aws_eip" "practice_terrafrom_eip" {
         EIP（Elastic IP Address）が必要です
         設定先はプライベートサブネットではなくパブリックサブネットです
  */
-resource "aws_nat_gateway" "practice_terrafrom_nat_gateway" {
+resource "aws_nat_gateway" "practice_terrafrom_nat_gateway_1a" {
     allocation_id = aws_eip.practice_terrafrom_eip.id
-    subnet_id     = aws_subnet.practice_terrafrom_public_subnet.id
+    subnet_id     = aws_subnet.practice_terrafrom_public_subnet_1a.id
     // 暗黙的にインターネットゲートウェイに依存しているため、インターネットゲートウェイ作成後に作成するように保証する
     // 初めて使用するリソースはTerraformのドキュメントを確認しdepends_onが必要かどうか確認すること
     depends_on    = [aws_internet_gateway.practice_terrafrom_igw]
