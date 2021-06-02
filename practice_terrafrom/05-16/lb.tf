@@ -15,8 +15,9 @@ resource "aws_lb" "practice_terrafrom_alb" {
     // タイムアウト設定 
     // 詳しくは：https://docs.aws.amazon.com/ja_jp/elasticloadbalancing/latest/application/application-load-balancers.html#connection-idle-timeout
     idle_timeout               = 60
-    // 削除保護のの設定でtrueにすることで本番環境で誤って削除されないようになる
-    enable_deletion_protection = true
+    // 削除保護の設定でtrueにすることで本番環境で誤って削除されないようになる
+    // NOTE: 試す段階で削除はしたいので一旦、コメントアウト
+    // enable_deletion_protection = true
 
     // 異なるアベイラビリティゾーンのサブネットを指定して、クロスゾーン負荷分散を実現する
     subnets = [
@@ -37,6 +38,10 @@ resource "aws_lb" "practice_terrafrom_alb" {
     ]
 }
 
+/*
+    セキュリティグループ
+        モジュールで複数定義する
+ */
 // HTTPの80番ポートを許可する
 module "http_sg" {
     source      = "./security_group"
@@ -62,6 +67,38 @@ module "http_redirect_sg" {
     vpc_id      = aws_vpc.practice_terrafrom_vpc.id
     port        = 8080
     cidr_blocks = ["0.0.0.0/0"]
+}
+
+/*
+    リスナー
+        どのポートのリクエストを受け付けるか設定する
+        リスナーはALBに複数アタッチできます
+ */
+resource "aws_lb_listener" "http" {
+    load_balancer_arn = aws_lb.practice_terrafrom_alb.arn
+    port              = 80
+    // HTTP or HTTPS のみサポートしている
+    protocol          = "HTTP"
+
+    /*
+        デフォルトアクション
+            リスナーは複数のルールを設定して、異なるアクションを実行できます
+            いずれのルールにも合致しない場合は、default_actionが実行される
+            typeの種類に関してはこちらを：https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener#type
+                forward       ：リクエストを別のターゲットグループに転送
+                fixed-response：固定のHTTPレスポンスを応答
+                redirect      ：別のURLにリダイレクト
+                authenticate-cognito, authenticate-oidcなども存在します
+     */
+    default_action {
+        type = "fixed-response"
+
+        fixed_response {
+            content_type = "text/plain"
+            message_body = "これは『HTTP』です"
+            status_code = "200"
+        }
+    }
 }
 
 output "alb_dns_name" {
