@@ -101,6 +101,29 @@ resource "aws_lb_listener" "http" {
     }
 }
 
+/*
+    ホストゾーン
+        ホストゾーンを使用する前にドメインの登録を済ませて置く必要があります
+            ドメインの登録方法
+                1. ドメイン名の入力
+                2. 連絡先情報の入力
+                3. 登録メールアドレスの有効性検証
+            ※ドメインの登録はTerraformでは実行できません
+        ホストゾーンはDNSレコードを束ねるリソースです
+            Route 53でドメインを登録した場合は、自動的に作成される
+            同時にNSレコードとSOAレコードも作成されます
+            NSレコード ：管理を委託しているDNSサーバの名前が書かれている行
+            SOAレコード：DNSで定義されるそのドメインについての情報の種類の１つで、ゾーンの管理のための情報や設定などを記述するためのもの
+ */
+data "aws_route53_zone" "dodonki" {
+    name = "dodonki.com"
+}
+
+// ホストゾーンの作成
+resource "aws_route53_zone" "test_dodonki" {
+    name = "test.dodonki.com"
+}
+
 output "alb_dns_name" {
     value = aws_lb.practice_terrafrom_alb.dns_name
 }
