@@ -124,6 +124,32 @@ resource "aws_route53_zone" "test_dodonki" {
     name = "test.dodonki.com"
 }
 
+/*
+    DNSレコード
+        Aレコード　　：IPv4でホスト名とIPアドレスの関連付けを定義するレコード
+        CNAMEレコード：正規ホスト名に対する別名を定義するレコード（特定のホスト名を別のドメイン名に転送するときなどに利用する）
+　                      「ドメイン名→CNAMEレコードのドメイン名→IPアドレス」という流れで名前解決する
+        ALIASレコード：AWSでのみ使用可能なDNSレコード、AWSプロダクトで利用するDNS名専用のCNAMEレコード風の挙動を実現するレコード
+                        「ドメイン名→IPアドレス」という流れで名前解決する（CNAMEレコードに比べてパフォーマンスが改善される）
+ */
+resource "aws_route53_record" "dodonki" {
+    zone_id = data.aws_route53_zone.dodonki.zone_id
+    name    = data.aws_route53_zone.dodonki.name
+    // AレコードやCNAMEレコードのタイプが指定可能です
+    // AWS独自拡張のALIASレコードを使用する場合は「A」を指定する
+    type    = "A"
+
+    alias {
+        name                   = aws_lb.practice_terrafrom_alb.dns_name
+        zone_id                = aws_lb.practice_terrafrom_alb.zone_id
+        evaluate_target_health = true
+    }
+}
+
 output "alb_dns_name" {
     value = aws_lb.practice_terrafrom_alb.dns_name
+}
+
+output "domain_name" {
+    value = aws_route53_record.dodonki.name
 }
