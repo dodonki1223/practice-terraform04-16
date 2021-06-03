@@ -146,6 +146,33 @@ resource "aws_route53_record" "dodonki" {
     }
 }
 
+/*
+    ACM（AWS Certificate Manager）
+        SSL証明書をACMで作成する
+        ACMは煩雑なSSL証明書の管理を担ってくれるマネージドサービスで、ドメイン検証をサポートしている
+        ドメイン検証についてはこちら：https://docs.aws.amazon.com/ja_jp/acm/latest/userguide/domain-ownership-validation.html
+ */
+resource "aws_acm_certificate" "dodonki" {
+    // ドメイン名を指定、「*.dodonki.com」のように指定すると、ワイルドカード証明書を発行できる
+    domain_name               = aws_route53_record.dodonki.name
+    // ドメインを追加したい場合は設定する
+    // ["test.dodonki.com"]を指定すると「dodonki.com」と「test.dodonki.com」のSSL証明書を作成できる
+    subject_alternative_names = []
+    // 検証方法の設定、DNS検証 or Eメール検証を選択する
+    // SSL証明書を自動更新したい場合はDNS検証を選択する
+    // Eメール検証とDNS検証の使い分けがワケワカメ……
+    validation_method         = "DNS"
+
+    // 「新しいSSL証明書を作ってから、古いSSL証明書と差し替える」という挙動に変更する
+    // ライフサイクルはTerraform独自の機能で、すべてのリソースに設定可能
+    lifecycle {
+        // create_before_destroy を true にすると「リソースを作成してから、リソースを削除する」という挙動になる
+        // ちなみに通常のリソースの再作成は「リソースの削除をしてから、リソースを作成する」という挙動になる
+        // create_before_destroy = true は通常のリソース再作成と逆の挙動になる
+        create_before_destroy = true
+    }
+}
+
 output "alb_dns_name" {
     value = aws_lb.practice_terrafrom_alb.dns_name
 }
