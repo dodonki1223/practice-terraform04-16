@@ -72,6 +72,8 @@ resource "aws_s3_bucket" "public" {
  */
 resource "aws_s3_bucket" "alb_log" {
     bucket = "alb-log-dodonki-practice-terraform"
+    // 中身が空でなくても無理やり削除する
+    force_destroy = true
 
     /*
         ライフサイクルルールを設定し180日経過したファイルを自動的に削除し、
