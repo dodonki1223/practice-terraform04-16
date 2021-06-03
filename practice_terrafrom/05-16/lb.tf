@@ -147,6 +147,20 @@ resource "aws_route53_record" "dodonki" {
 }
 
 /*
+    検証用DNSレコード
+        aws_acm_certificate リソースを参照する
+        resource "aws_acm_certificate" "dodonki" で subject_alternative_names でドメインを追加した場合は
+        そのドメイン用のDNSレコードも必要になるので注意
+ */
+resource "aws_route53_record" "dodonki_certificate" {
+    name    = aws_acm_certificate.dodonki.domain_validation_options[0].resource_record_name
+    type    = aws_acm_certificate.dodonki.domain_validation_options[0].resource_record_type
+    records = [aws_acm_certificate.dodonki.domain_validation_options[0].resource_record_value]
+    zone_id = data.aws_route53_zone.dodonki.id
+    ttl     = 60
+}
+
+/*
     ACM（AWS Certificate Manager）
         SSL証明書をACMで作成する
         ACMは煩雑なSSL証明書の管理を担ってくれるマネージドサービスで、ドメイン検証をサポートしている
@@ -171,6 +185,16 @@ resource "aws_acm_certificate" "dodonki" {
         // create_before_destroy = true は通常のリソース再作成と逆の挙動になる
         create_before_destroy = true
     }
+}
+
+/*
+    検証の待機
+        apply時にSSL証明書の検証が完了するまで待ってくれる
+        なにかのリソースを作るわけではない
+ */
+resource "aws_acm_certificate_validation" "dodonki" {
+    certificate_arn         = aws_acm_certificate.dodonki.arn
+    validation_record_fqdns = [aws_route53_record.dodonki_certificate.fqdn]
 }
 
 output "alb_dns_name" {
