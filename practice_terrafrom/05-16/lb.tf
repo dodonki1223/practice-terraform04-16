@@ -101,6 +101,27 @@ resource "aws_lb_listener" "http" {
     }
 }
 
+resource "aws_lb_listener" "https" {
+    load_balancer_arn = aws_lb.practice_terrafrom_alb.arn
+    port              = "443"
+    protocol          = "HTTPS"
+    // SSL証明書を設定する
+    certificate_arn   = aws_acm_certificate.dodonki.arn
+    // 「ELBSecurityPolicy-2016-08」を指定する
+    // 詳しくはこちらに：https://docs.aws.amazon.com/ja_jp/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies
+    ssl_policy        = "ELBSecurityPolicy-2016-08"
+
+    default_action {
+        type = "fixed-response"
+
+        fixed_response {
+            content_type = "text/plain"
+            message_body = "これは『HTTPS』です"
+            status_code = "200"
+        }
+    }
+}
+
 /*
     ホストゾーン
         ホストゾーンを使用する前にドメインの登録を済ませて置く必要があります
