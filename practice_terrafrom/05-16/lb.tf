@@ -188,6 +188,36 @@ resource "aws_lb_target_group" "practice_terrafrom_tg" {
 }
 
 /*
+    リスナールール
+ */
+resource "aws_lb_listener_rule" "practice_terrafrom_lr" {
+    listener_arn = aws_lb_listener.https.arn
+    // 優先順位
+    // 数字が小さいほど、優先順位が高いです、デフォルトルールはもっとも優先順位が低いです
+    priority     = 100
+
+    // フォワード先のターゲットグループを設定する
+    // この設定を行うことでターゲットグループへ紐付けされる
+    action {
+        type             = "forward"
+        target_group_arn = aws_lb_target_group.practice_terrafrom_tg.arn
+    }
+
+    /*
+        条件
+            「/img/*」のようなパスベースや「dodonki.com」のようなホストベースなどの条件を指定できます
+            「/*」はすべてのパスでマッチします
+            書籍のままでやるとエラーになるのでドキュメントをちゃんと参照すること
+                https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener_rule#example-usage
+     */
+    condition {
+        path_pattern {
+        values = ["/*"]
+        }
+    }
+}
+
+/*
     ホストゾーン
         ホストゾーンを使用する前にドメインの登録を済ませて置く必要があります
             ドメインの登録方法
