@@ -174,9 +174,23 @@ resource "aws_route53_record" "dodonki" {
         そのドメイン用のDNSレコードも必要になるので注意
  */
 resource "aws_route53_record" "dodonki_certificate" {
-    name    = aws_acm_certificate.dodonki.domain_validation_options[0].resource_record_name
-    type    = aws_acm_certificate.dodonki.domain_validation_options[0].resource_record_type
-    records = [aws_acm_certificate.dodonki.domain_validation_options[0].resource_record_value]
+    /*
+        こちらを参考に書き換え
+            https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation#example-usage
+        アップグレードガイドには以下のようにしろとも書かれている
+            https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-3-upgrade#domain_validation_options-changed-from-list-to-set
+     */
+    for_each = {
+        for dvo in aws_acm_certificate.dodonki.domain_validation_options : dvo.domain_name => {
+        name   = dvo.resource_record_name
+        record = dvo.resource_record_value
+        type   = dvo.resource_record_type
+        }
+    }
+
+    name    = each.value.name
+    records = [each.value.record]
+    type    = each.value.type
     zone_id = data.aws_route53_zone.dodonki.id
     ttl     = 60
 }
@@ -215,7 +229,13 @@ resource "aws_acm_certificate" "dodonki" {
  */
 resource "aws_acm_certificate_validation" "dodonki" {
     certificate_arn         = aws_acm_certificate.dodonki.arn
-    validation_record_fqdns = [aws_route53_record.dodonki_certificate.fqdn]
+    /*
+        こちらを参考に書き換え
+            https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation#example-usage
+        アップグレードガイドには以下のようにしろとも書かれている
+            https://registry.terraform.io/providers/hashicorp/aws/latest/docs/guides/version-3-upgrade#domain_validation_options-changed-from-list-to-set
+     */
+    validation_record_fqdns = [for record in aws_route53_record.dodonki_certificate : record.fqdn]
 }
 
 output "alb_dns_name" {
