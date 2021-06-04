@@ -5,7 +5,7 @@
             クロスゾーン負荷分散：https://docs.aws.amazon.com/ja_jp/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#cross-zone-load-balancing
  */
 resource "aws_lb" "practice_terrafrom_alb" {
-    name                       = "practiceterrafromalb"
+    name                       = "practice-terrafrom-alb"
     // ALB と NLB の作成が可能です（application or network を指定します）
     // CLB を作成する場合は aws_elb を使用する：https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/elb
     load_balancer_type         = "application"
@@ -142,6 +142,49 @@ resource "aws_lb_listener" "redirect_http_to_https" {
             status_code = "HTTP_301"
         }
     }
+}
+
+/*
+    ターゲットグループ
+        ALBがリクエストをフォワードする対象を「ターゲットグループ」と呼ぶ
+ */
+resource "aws_lb_target_group" "practice_terrafrom_tg" {
+    name                 = "practice-terrafrom-tg"
+    // EC2インスタンスやIPアドレス、Lambda関数などが指定できる（ECS FargateではIPを指定する）
+    target_type          = "ip"
+    /*
+        ルーティング先を指定する
+            vpc_id, port, protocolを指定する
+            多くの場合はHTTPSの終端はALBで行うため、protocolには「HTTP」を指定することが多いです
+     */
+    vpc_id               = aws_vpc.practice_terrafrom_vpc.id
+    port                 = 80
+    protocol             = "HTTP"
+    // 登録解除の時間
+    // ALBが待機する時間を設定します、デフォルトは300秒
+    deregistration_delay = 300
+
+    // ヘルスチェック
+    health_check {
+        // ヘルスチェックで使用するパス
+        path                = "/"
+        // 正常判定を行うまでのヘルスチェック実行回数
+        healthy_threshold   = 5
+        // 異常判定を行うまでのヘルスチェック実行回数
+        unhealthy_threshold = 2
+        // ヘルスチェックのタイムアウト時間（秒）
+        timeout             = 5
+        // ヘルスチェックの実行間隔（秒）
+        interval            = 30
+        // 正常判定を行うために使用するHTTPステータスコード
+        matcher             = 200
+        // ヘルスチェック時に使用するポート
+        port                = "traffic-port"
+        // ヘルスチェック時に使用するプロトコル
+        protocol            = "HTTP"
+    }
+
+    depends_on = [aws_lb.practice_terrafrom_alb]
 }
 
 /*
