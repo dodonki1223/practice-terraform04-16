@@ -76,7 +76,7 @@ module "http_redirect_sg" {
  */
 resource "aws_lb_listener" "http" {
     load_balancer_arn = aws_lb.practice_terrafrom_alb.arn
-    port              = 80
+    port              = "80"
     // HTTP or HTTPS のみサポートしている
     protocol          = "HTTP"
 
@@ -118,6 +118,28 @@ resource "aws_lb_listener" "https" {
             content_type = "text/plain"
             message_body = "これは『HTTPS』です"
             status_code = "200"
+        }
+    }
+}
+
+resource "aws_lb_listener" "redirect_http_to_https" {
+    load_balancer_arn = aws_lb.practice_terrafrom_alb.arn
+    port              = "8080"
+    protocol          = "HTTP"
+
+    /*
+        HTTPをHTTPSへリダイレクトさせる設定です
+        以下のコマンドで確認してください
+            curl http://dodonki.com:8080
+            curl -L http://dodonki.com:8080
+     */
+    default_action {
+        type = "redirect"
+
+        redirect {
+            port        = "443"
+            protocol    = "HTTPS"
+            status_code = "HTTP_301"
         }
     }
 }
