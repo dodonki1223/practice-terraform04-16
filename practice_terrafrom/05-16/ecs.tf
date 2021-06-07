@@ -49,3 +49,68 @@ resource "aws_ecs_task_definition" "practice_terrafrom_ecs_task" {
      */
     container_definitions    = file("./container_definitions.json")
 }
+
+/*
+    ECSサービス
+        起動するタスクの数を定義でき、指定した数のタスクを維持します（なんらかの理由でタスクが終了しても自動的に新しいタスクを起動していくれる）
+        ECSサービスはALBとの橋渡し役にもなる、インターネットからのリクエストはALBで受け、そのリクエストをコンテナにフォワードする
+ */
+resource "aws_ecs_service" "practice_terrafrom_ecs_service" {
+    name                              = "practice-terrafrom-ecs-service"
+    cluster                           = aws_ecs_cluster.practice_terrafrom_ecs.arn
+    task_definition                   = aws_ecs_task_definition.practice_terrafrom_ecs_task.arn
+    // 維持するタスク数：指定した数が1だとコンテナが異常終了すると、ECSサービスがタスクを再起動するまでアクセスできなくなるため本番環境では2以上を指定すること
+    desired_count                     = 2
+    launch_type                       = "FARGATE"
+    // プラットフォームバージョン：デフォルトはLATESTだが、LATESTは最新バージョンでない場合があるため、明示的にバージョンを指定すること
+    // 詳しくはこちらを参照すること：https://docs.aws.amazon.com/ja_jp/AmazonECS/latest/developerguide/platform_versions.html
+    platform_version                  = "1.3.0"
+    // ヘルスチェック猶予機関：十分な猶予期間を設定しておかないとヘルスチェックに引っかかり、タスクの終了と起動を無限に繰り返してしま
+    //                         うため0以上を指定すること（デフォルトは0なため）
+    health_check_grace_period_seconds = 60
+
+    /*
+        ネットクワーク構成
+            サブネットとセキュリティグループを設定する
+            パブリックIPアドレスを割り当てるか設定する（今回はプライベートネットワークで起動するため設定はしない）
+     */
+    network_configuration {
+        assign_public_ip = false
+        security_groups  = [module.nginx_sg.security_group_id]
+
+        subnets = [
+            aws_subnet.practice_terrafrom_private_subnet_1a.id,
+            aws_subnet.practice_terrafrom_private_subnet_1c.id,
+        ]
+    }
+
+    /*
+        ロードバランサー
+            ターゲットグループとコンテナの名前・ポート番号を指定してろオードバランサーと紐付ける
+                container_name  = コンテナ定義のname（container_definitions.jsonのこと）
+                containerj_port = コンテナ定義のportMappings.contanerPort（container_definitions.jsonのこと）
+     */
+    load_balancer {
+        target_group_arn = aws_lb_target_group.practice_terrafrom_tg.arn
+        container_name   = "practice-terrafrom"
+        container_port   = 80
+    }
+
+    /*
+        ライフサイクル
+            Fargateの場合、デプロイのたびにタスク定義が更新され、plan時に差分がでるため、
+            Terraformではタスク定義の変更を無視すべきです
+            ignore_changesに指定したパラメータは、リソースの初回作成時を除き、変更を無視するようになる
+     */
+    lifecycle {
+        ignore_changes = [task_definition]
+    }
+}
+
+module "nginx_sg" {
+    source      = "./security_group"
+    name        = "nginx-sg"
+    vpc_id      = aws_vpc.practice_terrafrom_vpc.id
+    port        = 80
+    cidr_blocks = [aws_vpc.practice_terrafrom_vpc.cidr_block]
+}
