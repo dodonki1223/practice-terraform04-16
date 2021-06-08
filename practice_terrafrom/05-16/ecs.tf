@@ -114,3 +114,15 @@ module "nginx_sg" {
     port        = 80
     cidr_blocks = [aws_vpc.practice_terrafrom_vpc.cidr_block]
 }
+
+/*
+    CloudWatch Logs
+        AWS各種サービスと統合されており、あらゆるログを収集できるマネージドサービスです
+        Fargateはホストサーバーにログインできず、コンテナのログを直接確認できません。そこでCloudWatch Logsと
+        連携し、ログを記録できるようにする
+ */
+resource "aws_cloudwatch_log_group" "practice_terrafrom_for_ecs" {
+    name              = "/ecs/practice_terrafrom"
+    // ログの保存期間を指定する
+    retention_in_days = 180
+}
