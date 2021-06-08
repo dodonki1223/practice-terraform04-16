@@ -126,3 +126,37 @@ resource "aws_cloudwatch_log_group" "practice_terrafrom_for_ecs" {
     // ログの保存期間を指定する
     retention_in_days = 180
 }
+
+/*
+    IAMポリシーデータソース
+        AmazonECSTaskExecutionRolePolicyはAWSが管理しているポリシーです
+ */
+data "aws_iam_policy" "ecs_task_execution_role_policy" {
+    arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+/*
+    ポリシードキュメント
+ */
+data "aws_iam_policy_document" "ecs_task_execution" {
+    // source_jsonを使用すると既存のポリシーを継承できます
+    source_json = data.aws_iam_policy.ecs_task_execution_role_policy.policy
+
+    // AmazonECSTaskExecutionRolePolicyを継承し「12.2.3SSMパラメータストアとECSの統合で」必要な権限を追加しておきます
+    statement {
+        effect    = "Allow"
+        actions   = ["ssm:GetParameters", "kms:Decrypt"]
+        resources = ["*"]
+    }
+}
+
+/*
+    IAMロール
+ */
+module "ecs_task_execution_role" {
+    source     = "./iam_role"
+    name       = "ecs-task-execution"
+    // 「ecs-tasks.amazonaws.com」を指定してIAMロールでECSで使うことを宣言します
+    identifier = "ecs-tasks.amazonaws.com"
+    policy     = data.aws_iam_policy_document.ecs_task_execution.json
+}

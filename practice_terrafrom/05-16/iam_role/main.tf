@@ -71,13 +71,13 @@ resource "aws_iam_role" "default" {
                     }
                 }
  */
-resource "aws_iam_policy_document" "assume_role" {
+data "aws_iam_policy_document" "assume_role" {
     statement {
         actions = ["sts:AssumeRole"]
 
         principals {
             type        = "Service"
-            indetifiers = [var.identifier]
+            identifiers = [var.identifier]
         }
     }
 }
@@ -95,7 +95,7 @@ resource "aws_iam_policy" "default" {
     IAMポリシーのアタッチ
         IAMロールにIAMポリシーをアタッチします
  */
-resource "aws_iam_role_policy_attachement" "default" {
+resource "aws_iam_role_policy_attachment" "default" {
     role       = aws_iam_role.default.name
     policy_arn = aws_iam_policy.default.arn
 }
