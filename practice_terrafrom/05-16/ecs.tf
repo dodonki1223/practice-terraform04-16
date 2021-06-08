@@ -46,8 +46,13 @@ resource "aws_ecs_task_definition" "practice_terrafrom_ecs_task" {
             image　　　 ：使用するコンテナイメージ
             essential　 ：タスク実行に必須かどうかのフラグ
             portMappings：マッピングするコンテナのポート番号
+            Dockerコンテナのロギング設定
+                logConfiguration.logDriver：awslogs を指定する
+                logConfiguration.options  ：aws_cloudwatch_log_groupの内容を設定していきます
+                logConfiguration.options.awslogs-group：aws_cloudwatch_log_groupのnameを指定します
      */
     container_definitions    = file("./container_definitions.json")
+    execution_role_arn       = module.ecs_task_execution_role.iam_role_arn
 }
 
 /*
