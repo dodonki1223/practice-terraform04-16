@@ -29,3 +29,12 @@
                 「ジョブAは必ずジョブBのあとに実行しなければならない」などはよくあります。単純に時間をずらして
                 暗黙的な依存関係制御を行う場合もありますが、アンチパターンなので避けましょう。
  */
+
+/*
+    バッチ用CloudWatch Logs
+        複数のバッチで使い回すこともできるがバッチごとに作成したほうが運用は楽です
+ */
+resource "aws_cloudwatch_log_group" "for_ecs_scheduled_tasks" {
+    name              = "/ecs-scheduled-tasks/practice_terrafrom"
+    retention_in_days = 180
+}
