@@ -30,3 +30,15 @@ resource "aws_kms_key" "practice_terrafrom_kms" {
     // 暗号化したデータは、いかなる手段でも複合できなくなるため、通常は無効化を選択すべき
     deletion_window_in_days = 20
 }
+
+/*
+    エイリアス
+        カスタマーマスターキーにエイリアスを設定することが可能です
+        カスタマーマスターキーにはUUIDが割り当てられますが、分かりづらいため、
+        エイリアスを設定するとよいです
+ */
+resource "aws_kms_alias" "practice_terrafrom_kms" {
+    // エイリアスで設定する名前には「alias/」というプレフィックスが必ず必要なので注意
+    name          = "alias/practice_terrafrom_kms"
+    target_key_id = aws_kms_key.practice_terrafrom_kms.key_id
+}
