@@ -49,10 +49,17 @@ resource "aws_ssm_parameter" "db_username" {
         暗号化する値がソースコードに平文で書かれてしまう
         暗号化するような秘匿性の高い情報はバージョン管理対象外にすべきなので、
         このままでは使い物にならない
+        「Terraformではダミー値を設定しておいて後でAWS CLIなどで更新する」という戦略を採用するとよい
+            Terraformでapply後、以下のようなコマンドを叩くこと
+            aws ssm put-parameter --name '/db/raw_password' --value 'ModifiedStrongPassword!' --type SecureString --overwrite --profile terraform
  */
 resource "aws_ssm_parameter" "db_raw_password" {
     name        = "/db/raw_password"
     value       = "VeryStrongPassword!"
     type        = "SecureString"
     description = "データベースのパスワード"
+
+    lifecycle {
+        ignore_changes = [value]
+    }
 }
