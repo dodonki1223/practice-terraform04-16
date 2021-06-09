@@ -33,3 +33,26 @@
             $ aws ssm get-parameter --output text --query Parameter.Value --name 'encryption_name' --with-decryption --profile terraform
             encryption value
  */
+
+/*
+    平文での登録
+ */
+resource "aws_ssm_parameter" "db_username" {
+    name        = "/db/username"
+    value       = "root"
+    type        = "String"
+    description = "データベースのユーザー名"
+}
+
+/*
+    暗号化での登録
+        暗号化する値がソースコードに平文で書かれてしまう
+        暗号化するような秘匿性の高い情報はバージョン管理対象外にすべきなので、
+        このままでは使い物にならない
+ */
+resource "aws_ssm_parameter" "db_raw_password" {
+    name        = "/db/raw_password"
+    value       = "VeryStrongPassword!"
+    type        = "SecureString"
+    description = "データベースのパスワード"
+}
