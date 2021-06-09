@@ -38,3 +38,16 @@ resource "aws_cloudwatch_log_group" "for_ecs_scheduled_tasks" {
     name              = "/ecs-scheduled-tasks/practice_terrafrom"
     retention_in_days = 180
 }
+
+/*
+    バッチ用タスク定義
+ */
+resource "aws_ecs_task_definition" "practice_terrafrom_batch" {
+    family                   = "practice-terrafrom-batch"
+    cpu                      = "256"
+    memory                   = "512"
+    network_mode             = "awsvpc"
+    requires_compatibilities = ["FARGATE"]
+    container_definitions    = file("./batch_container_definition.json")
+    // execution_role_arn       = module.ecs_task_execution_role.iam_role_arn
+}
