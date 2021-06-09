@@ -54,7 +54,7 @@ resource "aws_ssm_parameter" "db_username" {
             aws ssm put-parameter --name '/db/raw_password' --value 'ModifiedStrongPassword!' --type SecureString --overwrite --profile terraform
  */
 resource "aws_ssm_parameter" "db_raw_password" {
-    name        = "/db/raw_password"
+    name        = "/db/password"
     value       = "VeryStrongPassword!"
     type        = "SecureString"
     description = "データベースのパスワード"
