@@ -89,9 +89,13 @@ resource "aws_db_instance" "practice_terrafrom_rds" {
     maintenance_window         = "mon:10:10-mon:10:40"
     auto_minor_version_upgrade = false
     // 削除保護を有効にする
-    deletion_protection        = true
+    // deletion_protection        = true
+    // destroyコマンドで削除できるようにfalseに設定する
+    deletion_protection        = false
     // インスタンス削除時のスナップショット作成のため、skip_final_snapshotをfalseにする
-    skip_final_snapshot        = false
+    // skip_final_snapshot        = false
+    // destroyコマンドで削除できるようにtrueに設定する
+    skip_final_snapshot        = true
     port                       = 3306
     // RDSの設定変更のタイミングには「即時」と「メンテナンスウィンドウ」があります
     // RDSでは一部の設定変更に再起動が伴い、予期せぬダウンタイムが起こりえます、
