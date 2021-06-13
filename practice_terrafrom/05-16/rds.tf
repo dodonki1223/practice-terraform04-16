@@ -39,3 +39,13 @@ resource "aws_db_option_group" "practice_terrafrom_rds_og" {
         option_name = "MARIADB_AUDIT_PLUGIN"
     }
 }
+
+/*
+    DBサブネットグループ
+        DBを稼働させるサブネットをDBサブネットグループで定義する
+        サブネットには異なるアベイラビリティゾーンのものを含む
+ */
+resource "aws_db_subnet_group" "practice_terrafrom_rds_sg" {
+    name       = "practice-terrafrom-rds-sg"
+    subnet_ids = [aws_subnet.practice_terrafrom_private_subnet_1a.id, aws_subnet.practice_terrafrom_private_subnet_1c.id]
+}
