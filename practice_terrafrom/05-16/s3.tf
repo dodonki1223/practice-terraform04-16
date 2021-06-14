@@ -127,3 +127,20 @@ data "aws_iam_policy_document" "alb_log" {
             force_destroy = true
         }
  */
+
+/*
+    アーティファクトストア
+        CodePipelineの各ステージで、データの受け渡しに使用するアーティファクトストアを作成する
+ */
+resource "aws_s3_bucket" "artifact" {
+    bucket = "practice-terrafrom-artifact"
+
+    // ライフサイクルルールを設定し180日経過したファイルを自動的に削除し、ファイルが増えないようにする
+    lifecycle_rule {
+        enabled = true
+
+        expiration {
+            days = "180"
+        }
+    }
+}
