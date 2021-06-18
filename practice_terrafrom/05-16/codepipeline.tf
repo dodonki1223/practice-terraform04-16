@@ -143,7 +143,7 @@ resource "aws_codepipeline_webhook" "practice_terrafrom_cp_webhook" {
     // 20バイト以上のランダムな文字列を秘密鍵として指定する
     // `秘密鍵はtfstateファイルに平文で書き込まれます`
     // tfstateファイルへの書き込みを回避したい場合、Terraformでの管理は断念するしかしない
-    authenticationn_configuration {
+    authentication_configuration {
         secret_token = "VeryRandomStringMoreThan20Byte!"
     }
 
