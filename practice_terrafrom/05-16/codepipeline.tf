@@ -126,3 +126,31 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
         type     = "S3"
     }
 }
+
+/*
+    CodePipeline Webhook
+        GitHubからWebhookを受け取るためにCodePipeline Webhookを作成
+ */
+resource "aws_codepipeline_webhook" "practice_terrafrom_cp_webhook" {
+    name            = "practice-terrafrom-cp-webhook"
+    // Webhookを受け取ったら起動するパイプラインをtarget_piplelineで設定する
+    // 最初に実行するアクションをtarget_actionを指定する
+    target_pipeline = aws_codepipeline.practice_terrafrom_cp.name
+    target_action   = "Source"
+    // GitHubのWebhookはHMACによるメッセージ認証をサポートしています
+    authentication  = "GITHUB_HMAC"
+
+    // 20バイト以上のランダムな文字列を秘密鍵として指定する
+    // `秘密鍵はtfstateファイルに平文で書き込まれます`
+    // tfstateファイルへの書き込みを回避したい場合、Terraformでの管理は断念するしかしない
+    authenticationn_configuration {
+        secret_token = "VeryRandomStringMoreThan20Byte!"
+    }
+
+    // CodePiplelineの起動条件を指定することができる
+    // aws_codepipelineで指定したmainブランチのときのみ起動するように設定する
+    filter {
+        json_path = "$.ref"
+        match_equals = "refs/heads/{Branch}"
+    }
+}
