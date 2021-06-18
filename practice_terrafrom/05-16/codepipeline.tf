@@ -154,3 +154,25 @@ resource "aws_codepipeline_webhook" "practice_terrafrom_cp_webhook" {
         match_equals = "refs/heads/{Branch}"
     }
 }
+
+/*
+    GitHub Webhook
+        GitHub上でのイベントを検知し、コードの変更を通知するGitHub Webhookを定義します
+        CodePipelineではWebhookのリソースを通知する側・される側のそれぞれで実装する
+ */
+resource "github_repository_webhook" "practice_terrafrom_grw" {
+    repository = "terraform-study"
+
+    // 通知設定
+    //  CodepiepleのURLや、HMAC用の秘密鍵を指定します
+    //  secretとsecret_tokenには同じ値を入れる必要があります
+    configuration {
+        url          = aws_codepipeline_webhook.practice_terrafrom_cp_webhook.url
+        secret       = "VeryRandomeStringMoreThan20Byte!"
+        content_type = "json"
+        insecure_ssl = false
+    }
+
+    // イベントではトリガーとなるイベントを設定する（push や pull_requestなども指定できる）
+    events = ["push"]
+}
