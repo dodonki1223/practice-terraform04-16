@@ -6,5 +6,5 @@ provider "aws" {
 
 // GitHubプロバイダ
 provider "github" {
-    organization = "dodonki1223"
+    owner = "dodonki1223"
 }
