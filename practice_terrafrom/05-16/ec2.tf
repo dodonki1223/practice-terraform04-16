@@ -64,3 +64,15 @@ module "ec2_for_ssm_role" {
     identifier = "ec2.amazonaws.com"
     policy     = data.aws_iam_policy_document.ec2_for_ssm.json
 }
+
+/*
+    インスタンスプロファイル
+        インスタンスプロファイルはIAMロールのコンテナであり、インスタンスの起動時にEC2インスタンス
+        にロール情報を渡すために使用できる
+        IAMロールを収めるための容器であり、EC2にアタッチする時に必要なコネクターの役割をする
+        詳しくはこちら：https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
+ */
+resource "aws_iam_instance_profile" "ec2_for_ssm" {
+    name = "ec2-for-ssm"
+    role = module.ec2_for_ssm_role.iam_role_name
+}
