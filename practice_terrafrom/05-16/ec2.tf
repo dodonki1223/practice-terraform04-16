@@ -76,3 +76,20 @@ resource "aws_iam_instance_profile" "ec2_for_ssm" {
     name = "ec2-for-ssm"
     role = module.ec2_for_ssm_role.iam_role_name
 }
+
+/*
+    EC2インスタンス
+        オペレーション用のEC2インスタンスを作成する
+ */
+resource "aws_instance" "practice_terrafrom_operation" {
+    // Amazon Linux 2 の AMI を指定する
+    ami                  = "ami-0c3fd0f5d33134a76"
+    instance_type        = "t3.micro"
+    iam_instance_profile = aws_iam_instance_profile.ec2_for_ssm.name
+    subnet_id            = aws_subnet.practice_terrafrom_private_subnet_1a.id
+    user_data            = file("./user_data.sh")
+}
+
+output "operation_instance_id" {
+     value = aws_instance.practice_terrafrom_operation.id
+}
