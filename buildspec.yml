@@ -1,0 +1,20 @@
+version: 0.2
+
+phases:
+  install:
+      runtime-versions:
+          docker: 18
+  pre_build:
+    commands:
+      - REPO=$(aws ecr describe-repositories --repository-names practice-terrafrom-ecr --output text --query "repositories[0].repositoryUri")
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REPO
+      - IMAGE=$REPO:latest
+  build:
+    commands:
+      - docker build -t $IMAGE ./hello-word/
+      - docker push $IMAGE
+  post_build:
+    commands:
+      - printf '[{"name":"practice-terrafrom-ecr","imageUri":"%s"}]' $IMAGE > imagedefinitions.json
+artifacts:
+  files: imagedefinitions.json

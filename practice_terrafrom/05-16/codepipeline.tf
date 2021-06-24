@@ -12,11 +12,14 @@ data "aws_iam_policy_document" "codepipeline" {
         resources = ["*"]
 
         actions = [
-            "s3:PutObject",
             "s3:GetObject",
             "s3:GetObjectVersion",
+            "s3:GetBucketVersioning",
+            "s3:PutObjectAcl",
+            "s3:PutObject",
             "codebuild:BatchGetBuilds",
             "codebuild:StartBuild",
+            "codestar-connections:UseConnection",
             "ecs:DescribeServices",
             "ecs:DescribeTaskDefinition",
             "ecs:DescribeTasks",
@@ -43,7 +46,7 @@ module "codepipeline_role" {
  */
 resource "aws_codepipeline" "practice_terrafrom_cp" {
     name     = "practice-terrafrom-cp"
-    role_arn = module.codebuild_role.iam_role_arn
+    role_arn = module.codepipeline_role.iam_role_arn
 
     /*
         Sourceステージ：GitHubからソースコードを取得する
@@ -56,16 +59,15 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
         action {
             name             = "Source"
             category         = "Source"
-            owner            = "ThirdParty"
-            provider         = "GitHub"
-            version          = 1
-            output_artifacts = ["Source"]
+            owner            = "AWS"
+            provider         = "CodeStarSourceConnection"
+            version          = "1"
+            output_artifacts = ["source_output"]
 
             configuration = {
-                Owner                = "dodonki1223"
-                Repo                 = "terraform-study"
-                Branch               = "main"
-                PollForSourceChanges = false
+                ConnectionArn     = aws_codestarconnections_connection.practice_terrafrom_github.arn
+                FullRepositoryId  = "dodonki1223/terraform-study"
+                BranchName        = "main"
             }
         }
     }
@@ -81,12 +83,12 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
             category         = "Build"
             owner            = "AWS"
             provider         = "CodeBuild"
-            version          = 1
-            input_artifacts  = ["Source"]
-            output_artifacts = ["Build"]
+            version          = "1"
+            input_artifacts  = ["source_output"]
+            output_artifacts = ["build_output"]
 
             configuration = {
-                ProjectName = aws_codebuild_project.practice_terrafrom_cb_p.id
+                ProjectName   = aws_codebuild_project.practice_terrafrom_cb_p.id
             }
         }
     }
@@ -102,8 +104,8 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
             category         = "Deploy"
             owner            = "AWS"
             provider         = "ECS"
-            version          = 1
-            input_artifacts  = ["Build"]
+            version          = "1"
+            input_artifacts  = ["build_output"]
 
             /*
                 imagedefinitions.json
@@ -114,9 +116,9 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
                     imageUriにしてするのは：aws_ecs_task_definitionのfamily
              */
             configuration = {
-                ClusterName = aws_ecs_cluster.practice_terrafrom_ecs.name 
-                ServiceName = aws_ecs_service.practice_terrafrom_ecs_service.name
-                FileName    = "imagedefinitions.json"
+                ClusterName   = aws_ecs_cluster.practice_terrafrom_ecs.name 
+                ServiceName   = aws_ecs_service.practice_terrafrom_ecs_service.name
+                FileName      = "imagedefinitions.json"
             }
         }
     }
@@ -128,8 +130,26 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
 }
 
 /*
+    GitHubに接続用
+        他の書きぶりとしてCodePipelineに直接GitHubとしているなどがある
+ */
+resource "aws_codestarconnections_connection" "practice_terrafrom_github" {
+  name          = "practice-terrafrom-github"
+  provider_type = "GitHub"
+}
+
+// GitHubのシークレットトークンを設定する
+// 秘匿情報なのでベタ書きは良くない……
+locals {
+    webhook_secret = "NankaSugoiKeyNiSuruze"
+}
+
+/*
     CodePipeline Webhook
         GitHubからWebhookを受け取るためにCodePipeline Webhookを作成
+        予め作成しておいた GitHubのトークンを環境変数に設定しておく必要がある
+        設定しないと認証が通らない
+            export GITHUB_TOKEN=xxxxxxx
  */
 resource "aws_codepipeline_webhook" "practice_terrafrom_cp_webhook" {
     name            = "practice-terrafrom-cp-webhook"
@@ -144,13 +164,13 @@ resource "aws_codepipeline_webhook" "practice_terrafrom_cp_webhook" {
     // `秘密鍵はtfstateファイルに平文で書き込まれます`
     // tfstateファイルへの書き込みを回避したい場合、Terraformでの管理は断念するしかしない
     authentication_configuration {
-        secret_token = "VeryRandomStringMoreThan20Byte!"
+        secret_token = local.webhook_secret
     }
 
     // CodePiplelineの起動条件を指定することができる
     // aws_codepipelineで指定したmainブランチのときのみ起動するように設定する
     filter {
-        json_path = "$.ref"
+        json_path    = "$.ref"
         match_equals = "refs/heads/{Branch}"
     }
 }
@@ -168,7 +188,7 @@ resource "github_repository_webhook" "practice_terrafrom_grw" {
     //  secretとsecret_tokenには同じ値を入れる必要があります
     configuration {
         url          = aws_codepipeline_webhook.practice_terrafrom_cp_webhook.url
-        secret       = "VeryRandomeStringMoreThan20Byte!"
+        secret       = local.webhook_secret
         content_type = "json"
         insecure_ssl = false
     }
