@@ -144,3 +144,20 @@ resource "aws_s3_bucket" "artifact" {
         }
     }
 }
+
+/*
+    オペレーションログ
+        SessionManagerの操作ログを自動保存するために、SSM Documentを作成する必要がある
+        ログの保存先には、S3バケットとCloudWatch Logsを指定できます
+ */
+resource "aws_s3_bucket" "operation" {
+    bucket = "practice-terrafrom-operation"
+
+    lifecycle_rule {
+        enabled = true
+
+        expiration {
+            days = "180"
+        }
+    }
+}

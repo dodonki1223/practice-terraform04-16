@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "ec2_for_ssm" {
             "ecr:BatchGetImage",
             "ssm:GetParameter",
             "ssm:GetParameters",
-            "ssmGetParametersByPath",
+            "ssm:GetParametersByPath",
             "kms:Decrypt",
         ]
     }
