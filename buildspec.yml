@@ -11,10 +11,10 @@ phases:
       - IMAGE=$REPO:latest
   build:
     commands:
-      - docker build -t $IMAGE ./hello-word/
+      - docker build -t $IMAGE ./hello-world/
       - docker push $IMAGE
   post_build:
     commands:
-      - printf '[{"name":"practice-terrafrom-ecr","imageUri":"%s"}]' $IMAGE > imagedefinitions.json
+      - printf '[{"name":"practice-terrafrom","imageUri":"%s"}]' $IMAGE > imagedefinitions.json
 artifacts:
   files: imagedefinitions.json

@@ -66,7 +66,7 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
 
             configuration = {
                 ConnectionArn     = aws_codestarconnections_connection.practice_terrafrom_github.arn
-                FullRepositoryId  = "dodonki1223/terraform-study"
+                FullRepositoryId  = "dodonki1223/practice-terraform04-16"
                 BranchName        = "main"
             }
         }
@@ -113,7 +113,7 @@ resource "aws_codepipeline" "practice_terrafrom_cp" {
                     ECS Fargateの場合、latest タグでも必ずdocker pullするため、デプロイ
                     ごとにタグを変更する必要がありません
                     name に指定するのは：aws_ecs_task_definition
-                    imageUriにしてするのは：aws_ecs_task_definitionのfamily
+                    imageUriに指定するのは：aws_ecs_task_definitionのfamily
              */
             configuration = {
                 ClusterName   = aws_ecs_cluster.practice_terrafrom_ecs.name 
@@ -181,7 +181,7 @@ resource "aws_codepipeline_webhook" "practice_terrafrom_cp_webhook" {
         CodePipelineではWebhookのリソースを通知する側・される側のそれぞれで実装する
  */
 resource "github_repository_webhook" "practice_terrafrom_grw" {
-    repository = "terraform-study"
+    repository = "practice-terraform04-16"
 
     // 通知設定
     //  CodepiepleのURLや、HMAC用の秘密鍵を指定します
