@@ -63,3 +63,34 @@ resource "aws_ssm_parameter" "db_raw_password" {
         ignore_changes = [value]
     }
 }
+
+/*
+    オペレーションサーバー用のSSM Document
+        SSM Document とは？
+            Systems Manager がマネージドインスタンスで実行する操作を定義します
+            実行時にパラメータを指定して使用できる事前設定済みのドキュメントが 100 件以上含まれています
+        System Managerは何が嬉しいの？
+            https://dev.classmethod.jp/articles/ssh-through-session-manager/
+            IAMで認証・認可ができる
+            ポート空け不要
+            ログが取れる / ログを元に別AWSサービスをトリガできる
+ */
+resource "aws_ssm_document" "session_manager_run_shell" {
+    // SSM-SessionManagerRunShell を設定するとAWS CLIを使う時にオプション指定を省略できる
+    name            = "SSM-SessionManagerRunShell"
+    // type、format には session, json を指定する、SessionManager ではこの値は固定である
+    document_type   = "Session"
+    document_format = "JSON"
+
+    content = <<EOF
+    {
+        "schemaVersion": "1.0",
+        "description": "Document to hold regional settings for Session Manager",
+        "sessionType": "Standard_Stream",
+        "inputs": {
+            "s3BucketName": "${aws_s3_bucket.operation.id}",
+            "cloudWatchLogGroupName": "${aws_cloudwatch_log_group.operation.name}"
+        }
+    }
+EOF
+}
