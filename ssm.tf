@@ -74,6 +74,9 @@ resource "aws_ssm_parameter" "db_raw_password" {
             IAMで認証・認可ができる
             ポート空け不要
             ログが取れる / ログを元に別AWSサービスをトリガできる
+    オペレーションサーバーに接続する時は以下のようなコマンドを叩く
+        aws ssm start-session --target EC2のインスタンスID --document-name SSM-SessionManagerRunShell --profile terraform
+        ※事前にSession Manager Pluginをインストールしておくこと
  */
 resource "aws_ssm_document" "session_manager_run_shell" {
     // SSM-SessionManagerRunShell を設定するとAWS CLIを使う時にオプション指定を省略できる
