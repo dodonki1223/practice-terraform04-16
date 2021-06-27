@@ -90,6 +90,16 @@ resource "aws_instance" "practice_terrafrom_operation" {
     user_data            = file("./user_data.sh")
 }
 
+/*
+    CloudWatch Logs
+        オペレーションログを保存するためのもの
+ */
+resource "aws_cloudwatch_log_group" "operation" {
+    name              = "/operation"
+    retention_in_days = 180
+}
+
 output "operation_instance_id" {
      value = aws_instance.practice_terrafrom_operation.id
 }
+
