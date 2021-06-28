@@ -193,3 +193,20 @@ resource "aws_s3_bucket" "athena_query_results" {
         }
     }
 }
+
+/*
+    CloudWatch Logs永続化
+        CloudWatch Logsはストレージとしては少々割高なのでログをS3バケットで永続化する
+ */
+resource "aws_s3_bucket" "cloudwatch_logs" {
+    bucket        = "cloudwatch-logs-dodonki-pragmatic-terraform"
+    force_destroy = true
+
+    lifecycle_rule {
+        enabled = true
+
+        expiration {
+            days = "180"
+        }
+    }
+}
