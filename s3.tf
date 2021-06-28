@@ -133,7 +133,8 @@ data "aws_iam_policy_document" "alb_log" {
         CodePipelineの各ステージで、データの受け渡しに使用するアーティファクトストアを作成する
  */
 resource "aws_s3_bucket" "artifact" {
-    bucket = "practice-terrafrom-artifact"
+    bucket        = "practice-terrafrom-artifact"
+    force_destroy = true
 
     // ライフサイクルルールを設定し180日経過したファイルを自動的に削除し、ファイルが増えないようにする
     lifecycle_rule {
@@ -151,7 +152,31 @@ resource "aws_s3_bucket" "artifact" {
         ログの保存先には、S3バケットとCloudWatch Logsを指定できます
  */
 resource "aws_s3_bucket" "operation" {
-    bucket = "practice-terrafrom-operation"
+    bucket        = "practice-terrafrom-operation"
+    force_destroy = true
+
+    lifecycle_rule {
+        enabled = true
+
+        expiration {
+            days = "180"
+        }
+    }
+}
+
+/*
+    Athena のクエリ結果保存用バケット
+        ロギングの種類
+            S3へのロギング
+                ALB, Session Manager, CloudTrail, VPCフローログ, S3 アクセスログ
+            CloudWatch Logsへのロギング
+                ECS, RDS, Route53, Session Manager, CloudTrail, VPCフローログ, Lambda
+        Athenaを実行するためには予め、クエリ結果を保存するS3のバケットが必要なので作成しておく
+            詳しくはこちらの資料を：https://docs.aws.amazon.com/ja_jp/athena/latest/ug/querying.html
+ */
+resource "aws_s3_bucket" "athena_query_results" {
+    bucket        = "athena-query-results-practice-terrafrom"
+    force_destroy = true
 
     lifecycle_rule {
         enabled = true
