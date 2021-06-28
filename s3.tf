@@ -171,8 +171,15 @@ resource "aws_s3_bucket" "operation" {
                 ALB, Session Manager, CloudTrail, VPCフローログ, S3 アクセスログ
             CloudWatch Logsへのロギング
                 ECS, RDS, Route53, Session Manager, CloudTrail, VPCフローログ, Lambda
-        Athenaを実行するためには予め、クエリ結果を保存するS3のバケットが必要なので作成しておく
-            詳しくはこちらの資料を：https://docs.aws.amazon.com/ja_jp/athena/latest/ug/querying.html
+        ALBのログを検索できるようにするための手順
+            ・クエリ結果保存用のバケットを作成する
+                Athenaを実行するためには予め、クエリ結果を保存するS3のバケットが必要なので作成しておく
+                    詳しくはこちらの資料を：https://docs.aws.amazon.com/ja_jp/athena/latest/ug/querying.html
+            ・データベースを作成する
+                CREATE DATABASE mylog;
+            ・ALBログ用のテーブル定義
+                詳しくはこちらの資料を：https://docs.aws.amazon.com/ja_jp/athena/latest/ug/application-load-balancer-logs.html
+                    ALBのログ保存場所のパスをもとにクエリを実行する
  */
 resource "aws_s3_bucket" "athena_query_results" {
     bucket        = "athena-query-results-practice-terrafrom"
