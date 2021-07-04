@@ -21,3 +21,14 @@ data "aws_iam_policy_document" "kinesis_data_firehose" {
         ]
     }
 }
+
+/*
+    IAMロール
+ */
+module "kinesis_data_firehose_role" {
+    source     = "./iam_role"
+    name       = "kinesis-data-firehose"
+    // firehose.amazonaws.com を指定し、このIAMロールを Kinesis Data Firehose で使うことを宣言する
+    identifier = "firehose.amazonaws.com"
+    policy     = data.aws_iam_policy_document.kinesis_data_firehose.json
+}
