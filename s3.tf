@@ -210,3 +210,20 @@ resource "aws_s3_bucket" "cloudwatch_logs" {
         }
     }
 }
+
+/*
+    Kinesis Data Firehose配信ストリーム
+        ・配信先のS3バケットとIAMロールを設定するだけ
+        ・CloudWatch LogsサブスクリプションフィルタからKinesis Data Firehoseにログデータが流れると、
+          Kinesis Data Firehose配信ストリームに設定したS3バケットへログを保存する
+ */
+resource "aws_kinesis_firehose_delivery_stream" "practice_terrafrom_kinesis" {
+    name        = "practice-terrafrom-kinesis"
+    destination = "s3"
+
+    s3_configuration {
+        role_arn   = module.kinesis_data_firehose_role.iam_role_arn
+        bucket_arn = aws_s3_bucket.cloudwatch_logs.arn
+        prefix     = "ecs-scheduled-tasks/practice-terrafrom-kinesis/"
+    }
+}
