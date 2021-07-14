@@ -35,21 +35,21 @@
         複数のバッチで使い回すこともできるがバッチごとに作成したほうが運用は楽です
  */
 resource "aws_cloudwatch_log_group" "for_ecs_scheduled_tasks" {
-    name              = "/ecs-scheduled-tasks/practice_terrafrom"
-    retention_in_days = 180
+  name              = "/ecs-scheduled-tasks/practice_terrafrom"
+  retention_in_days = 180
 }
 
 /*
     バッチ用タスク定義
  */
 resource "aws_ecs_task_definition" "practice_terrafrom_batch" {
-    family                   = "practice-terrafrom-batch"
-    cpu                      = "256"
-    memory                   = "512"
-    network_mode             = "awsvpc"
-    requires_compatibilities = ["FARGATE"]
-    container_definitions    = file("./batch_container_definition.json")
-    execution_role_arn       = module.ecs_task_execution_role.iam_role_arn
+  family                   = "practice-terrafrom-batch"
+  cpu                      = "256"
+  memory                   = "512"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  container_definitions    = file("./batch_container_definition.json")
+  execution_role_arn       = module.ecs_task_execution_role.iam_role_arn
 }
 
 /*
@@ -57,28 +57,28 @@ resource "aws_ecs_task_definition" "practice_terrafrom_batch" {
         CloudWatch イベントからECSを起動するためのIAMロール
  */
 module "ecs_events_role" {
-    source     = "./iam_role"
-    name       = "ecs-events"
-    identifier = "events.amazonaws.com"
-    policy     = data.aws_iam_policy.ecs_events_role_policy.policy
+  source     = "./iam_role"
+  name       = "ecs-events"
+  identifier = "events.amazonaws.com"
+  policy     = data.aws_iam_policy.ecs_events_role_policy.policy
 }
 
 // AmazonEC2ContainerServiceEventsRole ポリシーを使用すると「タスクを実行する」権限と「タスクにIAMロールを渡す」権限を付与できる
 data "aws_iam_policy" "ecs_events_role_policy" {
-    arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceEventsRole"
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceEventsRole"
 }
 
 /*
     CloudWatchイベントルール
  */
 resource "aws_cloudwatch_event_rule" "practice_terrafrom_batch" {
-    name                = "practice-terrafrom-batch"
-    description         = "とても重要なバッチ処理です"
-    // cron式とrate式をサポートしている
-    // cron：「cron(0 8 * * ? *)」、タイムゾーンはUTCなので注意
-    // rate：「rate(5 minutes)」、単位は「1の場合は単数形、それ以外は複数形」つまり「rate(1 hours)」や「rate(5 hour)」のように書くことはできない
-    // 詳しくはこちらのドキュメントを：https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/events/ScheduledEvents.html
-    schedule_expression = "cron(*/2 * * * ? *)"
+  name        = "practice-terrafrom-batch"
+  description = "とても重要なバッチ処理です"
+  // cron式とrate式をサポートしている
+  // cron：「cron(0 8 * * ? *)」、タイムゾーンはUTCなので注意
+  // rate：「rate(5 minutes)」、単位は「1の場合は単数形、それ以外は複数形」つまり「rate(1 hours)」や「rate(5 hour)」のように書くことはできない
+  // 詳しくはこちらのドキュメントを：https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/events/ScheduledEvents.html
+  schedule_expression = "cron(*/2 * * * ? *)"
 }
 
 /*
@@ -87,25 +87,25 @@ resource "aws_cloudwatch_event_rule" "practice_terrafrom_batch" {
         ECS Scheduled Tasksの場合は、タスク定義をターゲットに設定する
  */
 resource "aws_cloudwatch_event_target" "practice_terrafrom_batch" {
-    target_id = "practice-terrafrom-batch"
-    // CloudWatchイベントルールを設定、これで定期的にCloudWatchイベントターゲットが実行される
-    rule      = aws_cloudwatch_event_rule.practice_terrafrom_batch.name
-    // CloudWatchイベントIAMロールを設定する
-    role_arn  = module.ecs_events_role.iam_role_arn
-    // ターゲットをarnで設定する、ECS Scheduled TasksではECSクラスタを指定する、さらに
-    // ecs_targetで、タスクの実行時の設定を行います
-    arn       = aws_ecs_cluster.practice_terrafrom_ecs.arn
+  target_id = "practice-terrafrom-batch"
+  // CloudWatchイベントルールを設定、これで定期的にCloudWatchイベントターゲットが実行される
+  rule = aws_cloudwatch_event_rule.practice_terrafrom_batch.name
+  // CloudWatchイベントIAMロールを設定する
+  role_arn = module.ecs_events_role.iam_role_arn
+  // ターゲットをarnで設定する、ECS Scheduled TasksではECSクラスタを指定する、さらに
+  // ecs_targetで、タスクの実行時の設定を行います
+  arn = aws_ecs_cluster.practice_terrafrom_ecs.arn
 
-    // ecs_targetにはロードバランサーやヘルスチェックの設定はないがそれ以外はaws_ecs_serviceと同じ
-    ecs_target {
-        launch_type         = "FARGATE"
-        task_count          = 1
-        platform_version    = "1.3.0"
-        task_definition_arn = aws_ecs_task_definition.practice_terrafrom_batch.arn
+  // ecs_targetにはロードバランサーやヘルスチェックの設定はないがそれ以外はaws_ecs_serviceと同じ
+  ecs_target {
+    launch_type         = "FARGATE"
+    task_count          = 1
+    platform_version    = "1.3.0"
+    task_definition_arn = aws_ecs_task_definition.practice_terrafrom_batch.arn
 
-        network_configuration {
-            assign_public_ip = "false"
-            subnets          = [aws_subnet.practice_terrafrom_private_subnet_1a.id]
-        }
+    network_configuration {
+      assign_public_ip = "false"
+      subnets          = [aws_subnet.practice_terrafrom_private_subnet_1a.id]
     }
+  }
 }

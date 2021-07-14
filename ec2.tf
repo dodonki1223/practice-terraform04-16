@@ -25,44 +25,44 @@
     ポリシードキュメント
  */
 data "aws_iam_policy_document" "ec2_for_ssm" {
-    source_json = data.aws_iam_policy.ec2_for_ssm.policy
+  source_json = data.aws_iam_policy.ec2_for_ssm.policy
 
-    statement {
-        effect    = "Allow"
-        resources = ["*"]
+  statement {
+    effect    = "Allow"
+    resources = ["*"]
 
-        // AmazonSSMManagedInstanceCore ポリシーをベースにし、S3バケットとCloudWatch Logsへの書き込み権限を付与する
-        // SSMパラメータストアとECRへの参照権限を追加することでEC2上で「ECRに格納したイメージのdocker pull」と「SSM
-        // パラメータストアから設定情報を注入したコンテナの起動」を実現できる
-        actions = [
-            "s3:PutObject",
-            "logs:PutLogEvents",
-            "logs:CreateLogStream",
-            "ecr:GetAuthorizationToken",
-            "ecr:BatchCheckLayerAvailability",
-            "ecr:GetDownloadUrlForLayer",
-            "ecr:BatchGetImage",
-            "ssm:GetParameter",
-            "ssm:GetParameters",
-            "ssm:GetParametersByPath",
-            "kms:Decrypt",
-        ]
-    }
+    // AmazonSSMManagedInstanceCore ポリシーをベースにし、S3バケットとCloudWatch Logsへの書き込み権限を付与する
+    // SSMパラメータストアとECRへの参照権限を追加することでEC2上で「ECRに格納したイメージのdocker pull」と「SSM
+    // パラメータストアから設定情報を注入したコンテナの起動」を実現できる
+    actions = [
+      "s3:PutObject",
+      "logs:PutLogEvents",
+      "logs:CreateLogStream",
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath",
+      "kms:Decrypt",
+    ]
+  }
 }
 
 data "aws_iam_policy" "ec2_for_ssm" {
-    arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 /*
     IAMロール
  */
 module "ec2_for_ssm_role" {
-    source     = "./iam_role"
-    name       = "ec2-for-ssm"
-    // 信頼ポリシーに「ec2.amazonaws.com」を指定し、このIAMロールをEC2インスタンスで使うことを宣言する
-    identifier = "ec2.amazonaws.com"
-    policy     = data.aws_iam_policy_document.ec2_for_ssm.json
+  source = "./iam_role"
+  name   = "ec2-for-ssm"
+  // 信頼ポリシーに「ec2.amazonaws.com」を指定し、このIAMロールをEC2インスタンスで使うことを宣言する
+  identifier = "ec2.amazonaws.com"
+  policy     = data.aws_iam_policy_document.ec2_for_ssm.json
 }
 
 /*
@@ -73,8 +73,8 @@ module "ec2_for_ssm_role" {
         詳しくはこちら：https://docs.aws.amazon.com/ja_jp/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html
  */
 resource "aws_iam_instance_profile" "ec2_for_ssm" {
-    name = "ec2-for-ssm"
-    role = module.ec2_for_ssm_role.iam_role_name
+  name = "ec2-for-ssm"
+  role = module.ec2_for_ssm_role.iam_role_name
 }
 
 /*
@@ -82,12 +82,12 @@ resource "aws_iam_instance_profile" "ec2_for_ssm" {
         オペレーション用のEC2インスタンスを作成する
  */
 resource "aws_instance" "practice_terrafrom_operation" {
-    // Amazon Linux 2 の AMI を指定する
-    ami                  = "ami-0c3fd0f5d33134a76"
-    instance_type        = "t3.micro"
-    iam_instance_profile = aws_iam_instance_profile.ec2_for_ssm.name
-    subnet_id            = aws_subnet.practice_terrafrom_private_subnet_1a.id
-    user_data            = file("./user_data.sh")
+  // Amazon Linux 2 の AMI を指定する
+  ami                  = "ami-0c3fd0f5d33134a76"
+  instance_type        = "t3.micro"
+  iam_instance_profile = aws_iam_instance_profile.ec2_for_ssm.name
+  subnet_id            = aws_subnet.practice_terrafrom_private_subnet_1a.id
+  user_data            = file("./user_data.sh")
 }
 
 /*
@@ -95,11 +95,11 @@ resource "aws_instance" "practice_terrafrom_operation" {
         オペレーションログを保存するためのもの
  */
 resource "aws_cloudwatch_log_group" "operation" {
-    name              = "/operation"
-    retention_in_days = 180
+  name              = "/operation"
+  retention_in_days = 180
 }
 
 output "operation_instance_id" {
-     value = aws_instance.practice_terrafrom_operation.id
+  value = aws_instance.practice_terrafrom_operation.id
 }
 

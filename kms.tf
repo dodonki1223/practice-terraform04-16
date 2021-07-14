@@ -17,18 +17,18 @@
     カスタマーマスターキー
  */
 resource "aws_kms_key" "practice_terrafrom_kms" {
-    description             = "Example Customer Master Key"
-    // 自動ローテーション、頻度は年に１度
-    // ローテーション後も、複合に必要な古い暗号化マテリアルは保存される。
-    // そのため、ローテーション前に暗号化したデータの復号が引き続き可能
-    enable_key_rotation     = true
-    // 有効化・無効化
-    // カスタマーマスターキーを無効化できる
-    is_enabled              = true
-    // 削除待機時間（デフォルトは30日）、待機期間中であれば、いつでも削除を取り消せます
-    // 「カスタマーマスターキーの削除は推奨されていない」、削除したカスタマーマスターキーで
-    // 暗号化したデータは、いかなる手段でも複合できなくなるため、通常は無効化を選択すべき
-    deletion_window_in_days = 20
+  description = "Example Customer Master Key"
+  // 自動ローテーション、頻度は年に１度
+  // ローテーション後も、複合に必要な古い暗号化マテリアルは保存される。
+  // そのため、ローテーション前に暗号化したデータの復号が引き続き可能
+  enable_key_rotation = true
+  // 有効化・無効化
+  // カスタマーマスターキーを無効化できる
+  is_enabled = true
+  // 削除待機時間（デフォルトは30日）、待機期間中であれば、いつでも削除を取り消せます
+  // 「カスタマーマスターキーの削除は推奨されていない」、削除したカスタマーマスターキーで
+  // 暗号化したデータは、いかなる手段でも複合できなくなるため、通常は無効化を選択すべき
+  deletion_window_in_days = 20
 }
 
 /*
@@ -38,7 +38,7 @@ resource "aws_kms_key" "practice_terrafrom_kms" {
         エイリアスを設定するとよいです
  */
 resource "aws_kms_alias" "practice_terrafrom_kms" {
-    // エイリアスで設定する名前には「alias/」というプレフィックスが必ず必要なので注意
-    name          = "alias/practice_terrafrom_kms"
-    target_key_id = aws_kms_key.practice_terrafrom_kms.key_id
+  // エイリアスで設定する名前には「alias/」というプレフィックスが必ず必要なので注意
+  name          = "alias/practice_terrafrom_kms"
+  target_key_id = aws_kms_key.practice_terrafrom_kms.key_id
 }

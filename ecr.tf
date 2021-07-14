@@ -11,7 +11,7 @@
     ECRリポジトリ（Elastic Container Registry）
  */
 resource "aws_ecr_repository" "practice_terrafrom_ecr" {
-    name = "practice-terrafrom-ecr"
+  name = "practice-terrafrom-ecr"
 }
 
 /*
@@ -20,10 +20,10 @@ resource "aws_ecr_repository" "practice_terrafrom_ecr" {
         詳しくは公式ドキュメントを参照すること：https://docs.aws.amazon.com/ja_jp/AmazonECR/latest/userguide/LifecyclePolicies.html
  */
 resource "aws_ecr_lifecycle_policy" "practice_terrafrom_ecr_lcp" {
-    repository = aws_ecr_repository.practice_terrafrom_ecr.name
+  repository = aws_ecr_repository.practice_terrafrom_ecr.name
 
-    // 「release」ではじまるイメージタグを30個までに制限している
-    policy = <<EOF
+  // 「release」ではじまるイメージタグを30個までに制限している
+  policy = <<EOF
     {
         "rules": [
             {
